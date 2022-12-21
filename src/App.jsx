@@ -1,67 +1,40 @@
-import { React, useState } from "react";
-import AddTodo from "./components/AddTodo";
-import {
-  LoginButton, LogoutButton, Text,
-  useSession,
-  CombinedDataProvider,
-} from "@inrupt/solid-ui-react";
-
-const authOptions = {
-  clientName: "Solid Todo App",
-};
+import React, { useState } from 'react';
+//mock data
+import data from "./data.json";
+//components
+import Header from "./Header";
+import ToDoList from "./ToDoList";
+import ToDoForm from './ToDoForm';
 
 function App() {
-  const { session } = useSession();
-  const [oidcIssuer, setOidcIssuer] = useState("");
 
-  const handleChange = (event) => {
-    setOidcIssuer(event.target.value);
-  };
+  const [toDoList, setToDoList] = useState(data);
+
+  const handleToggle = (id) => {
+    let mapped = toDoList.map(task => {
+      return task.id === Number(id) ? { ...task, complete: !task.complete } : { ...task };
+    });
+    setToDoList(mapped);
+  }
+
+  const handleFilter = () => {
+    let filtered = toDoList.filter(task => {
+      return !task.complete;
+    });
+    setToDoList(filtered);
+  }
+
+  const addTask = (userInput) => {
+    let copy = [...toDoList];
+    copy = [...copy, { id: toDoList.length + 1, task: userInput, complete: false }];
+    setToDoList(copy);
+  }
 
   return (
-    <div className="app-container">
-      {session.info.isLoggedIn ? (
-        <CombinedDataProvider
-          datasetUrl={session.info.webId}
-          thingUrl={session.info.webId}
-        >
-          <div className="message logged-in">
-            <span>You are logged in as: </span>
-            <Text properties={[
-              "http://www.w3.org/2006/vcard/ns#fn",
-              "http://xmlns.com/foaf/0.1/name",
-            ]} />
-            <LogoutButton />
-          </div>
-          <section>
-            <AddTodo />
-          </section>
-        </CombinedDataProvider>
-      ) : (
-        <div className="message">
-          <span>You are not logged in. </span>
-          <span>
-            Log in with:
-            <input
-              className="oidc-issuer-input "
-              type="text"
-              name="oidcIssuer"
-              list="providers"
-              value={oidcIssuer}
-              onChange={handleChange}
-            />
-            <datalist id="providers">
-              <option value="https://broker.pod.inrupt.com/" />
-              <option value="https://inrupt.net/" />
-            </datalist>
-          </span>
-          <LoginButton
-            oidcIssuer={oidcIssuer}
-            redirectUrl={window.location.href}
-            authOptions={authOptions}
-          />
-        </div>
-      )}
+    <div className="App">
+      <Header />
+      <ToDoList toDoList={toDoList} handleToggle={handleToggle} handleFilter={handleFilter} />
+      <ToDoForm addTask={addTask} />
     </div>
   );
 }
